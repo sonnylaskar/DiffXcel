@@ -101,4 +101,4 @@ Contributions are welcome\! If you have suggestions for improvements, bug fixes,
 
 ## License
 
-This project is open-sourced under the MIT License. See the `LICENSE` file (if you plan to add one) for more details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
