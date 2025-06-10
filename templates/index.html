@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiffXcel - Excel Comparison Tool</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563EB'%3E%3Cpath d='M2.25 18.75V7.5C2.25 6.94772 2.70191 6.5 3.25 6.5H20.75C21.2981 6.5 21.75 6.94772 21.75 7.5V18.75C21.75 19.3023 21.2981 19.75 20.75 19.75H3.25C2.70191 19.75 2.25 19.3023 2.25 18.75ZM6.5 9.75C6.5 9.33579 6.83579 9 7.25 9H16.75C17.1642 9 17.5 9.33579 17.5 9.75V15.25C17.5 15.6642 17.1642 16 16.75 16H7.25C6.83579 16 6.5 15.6642 6.5 15.25V9.75Z' /%3E%3C/svg%3E" type="image/svg+xml">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa',
+                            500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#172554',
+                        },
+                        secondary: {
+                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8',
+                            500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a', 950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            @apply font-sans bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800 min-h-screen flex flex-col;
+        }
+
+        /* Adjusted: Made container flex-col, added min-height: 0, and increased top margin */
+        .container {
+            @apply max-w-5xl mx-auto p-8 bg-white shadow-2xl rounded-xl mt-20 mb-8 flex-grow flex flex-col min-h-0; 
+            transform: translateY(-5px);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .container:hover {
+            transform: translateY(-8px);
+            @apply shadow-3xl;
+        }
+
+        .form-group label {
+            @apply block text-sm font-bold text-gray-700 mb-2;
+        }
+
+        .form-group input[type="file"] {
+            @apply block w-full text-base text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white;
+            padding: 0.75rem;
+        }
+        .form-group input[type="file"]::-webkit-file-upload-button {
+            @apply mr-4 py-2 px-4 rounded-md border-0 text-sm font-semibold bg-primary-100 text-primary-700 cursor-pointer hover:bg-primary-200;
+        }
+        .form-group input[type="file"]::file-selector-button {
+            @apply mr-4 py-2 px-4 rounded-md border-0 text-sm font-semibold bg-primary-100 text-primary-700 cursor-pointer hover:bg-primary-200;
+        }
+
+        .btn-primary {
+            @apply inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition transform duration-200 ease-in-out;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            @apply inline-flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition transform duration-200 ease-in-out;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .flash-message {
+            @apply p-4 mb-4 rounded-lg text-base font-medium;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .flash-message.error {
+            @apply bg-red-100 text-red-800 border border-red-200;
+        }
+        .flash-message.success {
+            @apply bg-green-100 text-green-800 border border-green-200;
+        }
+
+        /* Adjusted: Removed max-height, added flex-grow and overflow-y-auto */
+        .report-display {
+            @apply border border-gray-200 rounded-lg p-6 mt-8 bg-white shadow-inner flex-grow overflow-y-auto;
+        }
+
+        table.diff {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.875rem;
+            table-layout: auto;
+            min-width: max-content;
+        }
+        table.diff th, table.diff td {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            vertical-align: top;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        table.diff .diff_header { @apply bg-primary-100 font-bold text-primary-800; }
+        table.diff .diff_next, table.diff .diff_prev { @apply text-right bg-gray-50; }
+        table.diff .diff_add { @apply bg-green-50; }
+        table.diff .diff_chg { @apply bg-yellow-50; }
+        table.diff .diff_sub { @apply bg-red-50; }
+        table.diff .diff_skip { @apply bg-gray-50; }
+
+        .diff-pane {
+            @apply flex-1 p-3 border border-gray-200 rounded-lg bg-white shadow-sm;
+            max-height: 500px;
+            overflow: auto;
+            min-width: 0;
+        }
+        .pane-title {
+            @apply text-lg font-semibold text-gray-700 mb-2 text-center;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.4s ease-in-out;
+        }
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .spinner {
+            border: 8px solid #e0f2fe;
+            border-top: 8px solid #3b82f6;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            @apply text-center py-6 mt-auto text-gray-600 text-sm bg-gray-100 border-t border-gray-200;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            z-index: 1001;
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        .skip-link:focus {
+            transform: translateY(40px);
+        }
+
+        .upload-section-card {
+            @apply bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <div class="container" id="main-content">
+        <h1 class="text-5xl font-extrabold text-center text-gray-900 mb-12 tracking-tight">DiffXcel</h1> 
+        <p class="text-center text-lg text-gray-600 mb-10">Effortlessly compare your Excel files and visualize changes.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mt-6 mb-8">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="upload-section-card mb-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Upload Excel Files</h2>
+            <form id="uploadForm" action="{{ url_for('upload_files') }}" method="post" enctype="multipart/form-data" class="space-y-8" onsubmit="showLoadingSpinner()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="form-group">
+                        <label for="original_file">Upload Original Excel (v1):</label>
+                        <input type="file" id="original_file" name="original_file" accept=".xlsx" required aria-describedby="original_file_help">
+                        <p id="original_file_help" class="text-xs text-gray-500 mt-1">Select the older version of your Excel file.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="modified_file">Upload Modified Excel (v2):</label>
+                        <input type="file" id="modified_file" name="modified_file" accept=".xlsx" required aria-describedby="modified_file_help">
+                        <p id="modified_file_help" class="text-xs text-gray-500 mt-1">Select the newer version of your Excel file.</p>
+                    </div>
+                </div>
+                <div class="text-center mt-8">
+                    <button type="submit" class="btn-primary">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l-3 3m0 0L3 6m3 3v12a2 0 002 2h8a2 0 002-2V9m0 0l3-3m0 0l-3 3"></path>
+                        </svg>
+                        Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if report_content %}
+            <h2 class="text-4xl font-bold text-gray-800 mt-16 mb-6 text-center">Comparison Report</h2>
+            <div class="text-center mb-8">
+                {% if report_id %}
+                    <a href="{{ url_for('download_report', report_id=report_id) }}" class="btn-secondary">
+                        <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download Report HTML
+                    </a>
+                {% endif %}
+            </div>
+            <div class="report-display">
+                {{ report_content | safe }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden" aria-live="polite" aria-busy="true">
+        <div class="spinner" role="status" aria-label="Loading..."></div>
+        <p class="text-primary-700 mt-4 text-lg font-medium">Generating report, please wait...</p>
+    </div>
+
+    <footer>
+        &copy; <span id="current-year"></span> DiffXcel. All rights reserved.
+        <br>
+        <span class="text-xs">
+            Created with <span class="text-red-500">&hearts;</span> by Sonny Laskar.
+        </span>
+    </footer>
+
+    <script>
+        function showLoadingSpinner() {
+            const originalFile = document.getElementById('original_file');
+            const modifiedFile = document.getElementById('modified_file');
+
+            if (!originalFile.files.length || !modifiedFile.files.length) {
+                return false;
+            }
+
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            setTimeout(() => {}, 50);
+        }
+
+        window.addEventListener('load', function() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+                loadingOverlay.classList.add('hidden');
+            }
+
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // --- Synchronize Scrolling for Diff Panes ---
+            const sheetContainers = document.querySelectorAll('.sheet-container');
+            sheetContainers.forEach(container => {
+                const leftPane = container.querySelector('[id^="leftDiffPane_"]');
+                const rightPane = container.querySelector('[id^="rightDiffPane_"]');
+
+                if (leftPane && rightPane) {
+                    let scrollingLeft = false;
+                    let scrollingRight = false;
+
+                    leftPane.addEventListener('scroll', () => {
+                        if (!scrollingRight) {
+                            scrollingLeft = true;
+                            rightPane.scrollLeft = leftPane.scrollLeft;
+                            rightPane.scrollTop = leftPane.scrollTop;
+                        }
+                        scrollingRight = false;
+                    });
+
+                    rightPane.addEventListener('scroll', () => {
+                        if (!scrollingLeft) {
+                            scrollingRight = true;
+                            leftPane.scrollLeft = rightPane.scrollLeft;
+                            leftPane.scrollTop = rightPane.scrollTop;
+                        }
+                        scrollingLeft = false;
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
