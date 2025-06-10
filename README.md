@@ -17,6 +17,10 @@ DiffXcel is a lightweight web application built with Flask that allows you to ea
 
 DiffXcel leverages the `openpyxl` library to read Excel files and `difflib.HtmlDiff` to generate the visual differences. Each sheet is converted into a list of tab-separated lines, allowing `HtmlDiff` to effectively compare their contents. The application then aggregates these differences into a single, comprehensive HTML report.
 
+![DiffXCel Comparison Screenshot](screenshot.png)
+
+*A visual representation of DiffXCel in action, showcasing a clear, color-coded comparison report.*
+
 ## Getting Started
 
 Follow these steps to set up and run DiffXcel locally.
